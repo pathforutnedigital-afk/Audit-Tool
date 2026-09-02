@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pathfortune Digital Audit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --p1:#186DB6; --p2:#1E74BC; --p3:#287ABF; --p-dark:#1E5185;
+    --navy:#12233B; --white:#FFFFFF; --gray:#F6F8FA; --line:#E4E8EE; --slate:#64748B;
+    --good:#1F9D6B; --warn:#E2A034; --crit:#DC3545;
+    --r:10px; --r-sm:7px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--gray); color:var(--navy); font-family:'Inter',sans-serif; font-size:14.5px; line-height:1.55}
+  h1,h2,h3{font-family:'Inter'; margin:0; font-weight:700}
+  a{color:inherit}
+  .shell{display:grid; grid-template-columns:250px 1fr; min-height:100vh}
+
+  .sidebar{background:var(--navy); color:#EAF0FA; display:flex; flex-direction:column; position:sticky; top:0; height:100vh}
+  .sidebar-top{padding:22px 20px 14px}
+  .brand{font-weight:800; font-size:16.5px; letter-spacing:.01em}
+  .brand-tag{color:#8FA3BE; font-size:11px; margin-top:2px}
+  .nav{list-style:none; padding:8px 12px; margin:0; flex:1}
+  .nav li{display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:var(--r-sm); cursor:pointer; font-size:13.5px; font-weight:500; color:#C6D2E4; margin-bottom:2px}
+  .nav li:hover{background:#1B3352; color:#fff}
+  .nav li.active{background:var(--p1); color:#fff}
+  .sidebar-footer{padding:16px 20px; border-top:1px solid #1E3453; font-size:11.5px; color:#7B8CA6}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:16px 30px; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5}
+  .topbar h1{font-size:19px}
+  .topbar-actions{display:flex; align-items:center; gap:14px}
+  .icon-btn{background:transparent; border:1px solid var(--line); width:34px; height:34px; border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--slate)}
+  .icon-btn:hover{color:var(--p1); border-color:var(--p1)}
+  .primary-btn{background:var(--p1); color:#fff; border:none; padding:9px 16px; font-weight:600; font-size:13px; border-radius:var(--r-sm); cursor:pointer; display:inline-flex; align-items:center; gap:7px}
+  .primary-btn:hover{background:var(--p2)}
+  .hamburger{display:none; background:transparent; border:none; cursor:pointer; color:var(--navy); font-size:18px}
+
+  .content{padding:28px 34px; max-width:1160px}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:30px}
+  .kpi-card{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:18px}
+  .kpi-card .n{font-size:26px; font-weight:800}
+  .kpi-card .l{font-size:11.5px; color:var(--slate); margin-top:3px}
+
+  .hero{max-width:760px; margin:10px 0 40px}
+  .hero .eyebrow{font-size:12px; letter-spacing:.06em; color:var(--p1); font-weight:700; text-transform:uppercase; margin-bottom:12px}
+  .hero h1{font-size:32px; line-height:1.2; margin-bottom:10px}
+  .hero p{font-size:15px; color:var(--slate); margin-bottom:22px}
+  .url-form{display:flex; gap:10px; margin-bottom:8px}
+  .url-form input{flex:1; padding:13px 15px; border:1.5px solid var(--line); border-radius:var(--r); font-size:14.5px}
+  .url-form input:focus{outline:none; border-color:var(--p1)}
+  .url-form button{padding:13px 22px; background:var(--p1); color:#fff; border:none; font-weight:700; font-size:14px; border-radius:var(--r); cursor:pointer; white-space:nowrap}
+  .url-form button:hover{background:var(--p2)} .url-form button:disabled{opacity:.5}
+  .hint{font-size:12px; color:var(--slate); margin-bottom:28px}
+  .secondary-cta{background:transparent; border:none; color:var(--p1); font-size:13px; font-weight:600; cursor:pointer; padding:0}
+
+  .social-section h2{font-size:16px; margin-bottom:4px}
+  .social-section .sub{font-size:12.5px; color:var(--slate); margin-bottom:16px}
+  .detected-banner{background:#EAF3FC; border:1px solid #BFDCF3; border-radius:var(--r-sm); padding:10px 14px; font-size:12.5px; margin-bottom:16px}
+  .platform-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .platform-card{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:13px 14px; display:flex; align-items:center; gap:11px}
+  .platform-badge{width:34px; height:34px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px}
+  .platform-card .body{flex:1; min-width:0}
+  .platform-card .name{font-size:12px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:6px}
+  .platform-card input{width:100%; border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:12.5px}
+  .platform-card .status{font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px}
+  .status-connected{background:#DFF5EA; color:var(--good)} .status-detected{background:#EAF3FC; color:var(--p1)} .status-empty{background:#F1F3F6; color:var(--slate)}
+
+  .progress-screen{max-width:520px; margin:60px auto; text-align:center}
+  .progress-screen h2{font-size:20px; margin-bottom:6px}
+  .progress-bar-track{height:8px; background:var(--line); border-radius:5px; overflow:hidden; margin:20px 0}
+  .progress-bar-fill{height:100%; background:var(--p1); border-radius:5px; transition:width .4s ease}
+  .progress-steps{list-style:none; padding:0; margin:0; text-align:left}
+  .progress-steps li{display:flex; align-items:center; gap:10px; padding:8px 0; font-size:13.5px; color:var(--slate)}
+  .progress-steps li.done{color:var(--navy)} .progress-steps li.active{color:var(--p1); font-weight:600}
+  .step-mark{width:18px; height:18px; border-radius:50%; border:2px solid var(--line); flex:none}
+  .progress-steps li.done .step-mark{background:var(--good); border-color:var(--good)}
+  .progress-steps li.active .step-mark{border-color:var(--p1)}
+
+  .error-state{background:#FBE9E7; border:1px solid #F3C6C0; border-radius:var(--r); padding:22px; text-align:center}
+  .error-state button{margin-top:10px; background:var(--navy); color:#fff; border:none; padding:8px 16px; border-radius:var(--r-sm); cursor:pointer; font-size:12.5px}
+  .empty-state{background:#fff; border:1px dashed var(--line); border-radius:var(--r); padding:32px; text-align:center; color:var(--slate); font-size:13px}
+
+  .report-head{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:22px; gap:16px; flex-wrap:wrap}
+  .report-head h1{font-size:24px}
+  .report-head .url{color:var(--slate); font-size:13px; margin-top:4px}
+  .run-btn{background:var(--p1); color:#fff; border:none; padding:10px 17px; font-size:13px; font-weight:700; cursor:pointer; border-radius:var(--r-sm)}
+  .run-btn:hover{background:var(--p2)} .run-btn:disabled{opacity:.5}
+  .tabs{display:flex; gap:2px; margin-bottom:24px; border-bottom:1px solid var(--line); overflow-x:auto}
+  .tab{padding:9px 12px; font-size:12.5px; color:var(--slate); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; font-weight:600}
+  .tab.active{color:var(--p1); border-bottom-color:var(--p1)}
+  .score-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:12px}
+  .score-card{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:16px}
+  .score-card .n{font-size:26px; font-weight:800}
+  .score-card .l{font-size:11px; color:var(--slate); text-transform:uppercase; letter-spacing:.03em}
+  .score-card .status{font-size:11px; font-weight:700; margin-top:6px; display:inline-block; padding:2px 8px; border-radius:20px}
+  .status.excellent{background:#DFF5EA; color:var(--good)} .status.good{background:#E4EFFB; color:var(--p1)}
+  .status.average{background:#FCF0DA; color:var(--warn)} .status.poor{background:#FBE1E3; color:var(--crit)}
+  .info-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px}
+  .info-card{background:#fff; border:1px dashed #C9D5E6; border-radius:var(--r); padding:14px 16px}
+  .info-card .l{font-size:12px; font-weight:700; margin-bottom:4px}
+  .info-card .d{font-size:11.5px; color:var(--slate)}
+  .info-card .badge{font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px; display:inline-block; margin-top:6px}
+  .badge.on{background:#DFF5EA; color:var(--good)} .badge.off{background:#F1F3F6; color:var(--slate)}
+  section.block{margin-bottom:28px} section.block h2{font-size:16px; margin-bottom:12px}
+  .card-box{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:18px 20px}
+  .note{color:var(--slate); font-size:13px; background:#EFF6FF; border:1px solid #CFE2F6; padding:14px 16px; border-radius:var(--r)}
+  .swot-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .swot-cell{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:16px 18px; border-top:3px solid var(--line)}
+  .swot-cell.strengths{border-top-color:var(--good)} .swot-cell.weaknesses{border-top-color:var(--crit)}
+  .swot-cell.opportunities{border-top-color:var(--warn)} .swot-cell.threats{border-top-color:var(--slate)}
+  .swot-cell h3{font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:9px}
+  .swot-cell ul{margin:0; padding-left:16px; font-size:13px} .swot-cell li{margin-bottom:6px}
+  .actions{list-style:none; padding:0; margin:0; background:#fff; border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+  .actions li{display:flex; gap:11px; padding:11px 15px; border-bottom:1px solid var(--line); font-size:13.5px; align-items:flex-start}
+  .actions li:last-child{border-bottom:none}
+  .pri{font-size:10px; text-transform:uppercase; padding:3px 8px; border-radius:20px; font-weight:700; flex:none}
+  .pri.high{background:#FBE1E3; color:var(--crit)} .pri.medium{background:#FCF0DA; color:var(--warn)} .pri.low{background:#DFF5EA; color:var(--good)}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line)}
+  th{color:var(--slate); font-weight:600; font-size:10.5px; text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  .swatches{display:flex; gap:14px; flex-wrap:wrap}
+  .swatch{width:70px; text-align:center}
+  .swatch .chip{width:70px; height:70px; border:1px solid var(--line); border-radius:9px}
+  .swatch .code{font-size:10.5px; color:var(--slate); margin-top:5px}
+  .kw{display:inline-block; background:#fff; border:1px solid var(--line); padding:5px 11px; margin:0 6px 6px 0; font-size:12.5px; border-radius:20px}
+  .social-card{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:15px 17px; margin-bottom:11px; display:flex; gap:13px}
+  .social-card img{width:48px; height:48px; border-radius:8px; object-fit:cover}
+  .plat{font-size:10.5px; text-transform:uppercase; color:var(--p1); font-weight:700}
+  .img-thumb{width:38px; height:38px; object-fit:cover; border-radius:5px; margin-right:8px; border:1px solid var(--line)}
+  .connect-btn{background:var(--p1); color:#fff; border:none; padding:9px 16px; font-size:12.5px; font-weight:700; border-radius:var(--r-sm); cursor:pointer}
+  .cmp-form{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap}
+  .cmp-form input{flex:1; min-width:200px; padding:9px 11px; border:1px solid var(--line); border-radius:var(--r-sm); font-size:13px}
+
+  .list-row{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; background:#fff; border:1px solid var(--line); border-radius:var(--r); margin-bottom:10px; cursor:pointer}
+  .list-row:hover{border-color:var(--p1)}
+  .list-row .name{font-weight:600; font-size:14px}
+  .list-row .meta{font-size:12px; color:var(--slate); margin-top:2px}
+
+  @media (max-width: 880px){
+    .shell{grid-template-columns:1fr}
+    .sidebar{position:fixed; left:-260px; width:250px; z-index:20; transition:left .2s ease}
+    .sidebar.open{left:0}
+    .hamburger{display:flex}
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .score-grid{grid-template-columns:repeat(2,1fr)}
+    .info-grid{grid-template-columns:1fr 1fr}
+    .platform-grid{grid-template-columns:1fr}
+    .swot-grid{grid-template-columns:1fr}
+    .content{padding:18px}
+    .url-form{flex-direction:column}
+    table{display:block; overflow-x:auto; white-space:nowrap}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">PATHFORTUNE</div>
+      <div class="brand-tag">Digital Audit</div>
+    </div>
+    <ul class="nav" id="navList"></ul>
+    <div class="sidebar-footer">Pathfortune Digital Media</div>
+  </aside>
+
+  <div>
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+        <h1 id="pageTitle">New Audit</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" title="Notifications">&#128276;</button>
+        <button class="primary-btn" onclick="setView('newaudit')">+ New Audit</button>
+      </div>
+    </div>
+    <main class="content" id="main"></main>
+  </div>
+</div>
+
+<script>
+let clients = [];
+let currentView = 'newaudit';
+let activeId = null;
+let activeTab = 'overview';
+let detectedSocial = {};
+
+const NAV_ITEMS = [
+  { id:'dashboard', label:'Dashboard' },
+  { id:'newaudit', label:'New Audit' },
+  { id:'audits', label:'Audits' },
+  { id:'clients', label:'Clients' },
+  { id:'competitors', label:'Competitors' },
+  { id:'reports', label:'Reports' },
+  { id:'settings', label:'Settings' },
+];
+const PAGE_TITLES = { dashboard:'Dashboard', newaudit:'New Audit', audits:'Audits', clients:'Clients', competitors:'Competitors', reports:'Reports', settings:'Settings' };
+
+const PLATFORMS = [
+  { key:'instagram', label:'Instagram', color:'#C2185B', placeholder:'https://instagram.com/brandname' },
+  { key:'facebook', label:'Facebook', color:'#1877F2', placeholder:'https://facebook.com/brandname' },
+  { key:'linkedin', label:'LinkedIn', color:'#0A66C2', placeholder:'https://linkedin.com/company/brandname' },
+  { key:'youtube', label:'YouTube', color:'#CC0000', placeholder:'https://youtube.com/@brandname' },
+  { key:'x', label:'X / Twitter', color:'#111827', placeholder:'https://x.com/brandname' },
+  { key:'googleBusiness', label:'Google Business', color:'#188038', placeholder:'Profile / Maps URL' },
+  { key:'pinterest', label:'Pinterest', color:'#E60023', placeholder:'Profile URL' },
+  { key:'tiktok', label:'TikTok', color:'#111827', placeholder:'Profile URL' },
+];
+
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
+function renderNav(){
+  document.getElementById('navList').innerHTML = NAV_ITEMS.map(function(n){ return '<li class="' + (currentView===n.id?'active':'') + '" onclick="setView(\'' + n.id + '\')">' + n.label + '</li>'; }).join('');
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[currentView] || 'Report';
+}
+function setView(v){
+  currentView = v; activeId = null;
+  document.getElementById('sidebar').classList.remove('open');
+  renderNav(); render();
+}
+
+var AVATAR_COLORS = ['#186DB6','#1E9D7A','#8B6FDB','#D9673F','#287ABF'];
+function avatarColor(name){ var h=0; for (var i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%AVATAR_COLORS.length; return AVATAR_COLORS[h]; }
+function statusOf(score){ return score>=85?'excellent':score>=70?'good':score>=50?'average':'poor'; }
+function statusLabel(s){ return {excellent:'Excellent',good:'Good',average:'Average',poor:'Poor'}[s]; }
+function fmtBytes(n){ if(!n) return '\u2014'; return n>1024*1024 ? (n/1024/1024).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB'; }
+function sevPri(sev){ return sev==='critical'?'high':sev==='major'?'medium':'low'; }
+function findingsList(findings){
+  findings = findings || [];
+  if (!findings.length) return '<ul class="actions"><li style="border:none">No issues found.</li></ul>';
+  return '<ul class="actions">' + findings.map(function(f){ return '<li><span class="pri ' + sevPri(f.severity) + '">' + f.severity + '</span><span>' + f.issue + '</span></li>'; }).join('') + '</ul>';
+}
+var chartInstances = {};
+function renderChart(canvasId, config){
+  if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+  var el = document.getElementById(canvasId);
+  if (!el) return;
+  chartInstances[canvasId] = new Chart(el, config);
+}
+
+async function loadClients(){
+  try {
+    var res = await fetch('/api/clients');
+    clients = await res.json();
+  } catch (e) { clients = []; }
+}
+
+async function init(){
+  await loadClients();
+  renderNav();
+  render();
+}
+init();
+
+async function detectSocialFromUrl(){
+  var url = document.getElementById('heroUrl').value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//.test(url)) url = 'https://' + url;
+  var banner = document.getElementById('detectBanner');
+  banner.textContent = 'Scanning the site for social profiles...';
+  banner.style.display = 'block';
+  try {
+    var res = await fetch('/api/detect/social', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url: url }) });
+    var data = await res.json();
+    if (data.detected && Object.keys(data.detected).length) {
+      detectedSocial = data.detected;
+      for (var k in detectedSocial) {
+        var input = document.getElementById('social-'+k);
+        if (input && !input.value) input.value = detectedSocial[k];
+      }
+      banner.textContent = 'Social profiles detected: ' + Object.keys(detectedSocial).join(', ') + '. Review and edit below.';
+      renderPlatformStatuses();
+    } else {
+      banner.textContent = 'No social profiles were auto-detected \u2014 add them manually below if you have them.';
+    }
+  } catch (e) {
+    banner.style.display = 'none';
+  }
+}
+function renderPlatformStatuses(){
+  PLATFORMS.forEach(function(p){
+    var el = document.getElementById('status-'+p.key);
+    var input = document.getElementById('social-'+p.key);
+    if (!el || !input) return;
+    if (input.value && detectedSocial[p.key] === input.value) { el.textContent = 'Detected'; el.className = 'status status-detected'; }
+    else if (input.value) { el.textContent = 'Ready'; el.className = 'status status-connected'; }
+    else { el.textContent = 'Not connected'; el.className = 'status status-empty'; }
+  });
+}
+
+var AUDIT_STEPS = ['Fetching website','Technical SEO','On-page SEO','Content','Images & Visuals','Social Media','Google Presence','Lead Generation','Finalizing score'];
+
+async function startFreeAudit(){
+  var urlInput = document.getElementById('heroUrl');
+  var url = urlInput.value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//.test(url)) url = 'https://' + url;
+  var socialLinks = PLATFORMS.map(function(p){ var el = document.getElementById('social-'+p.key); return el ? el.value.trim() : ''; }).filter(Boolean);
+
+  showProgressScreen();
+  try {
+    var name = new URL(url).hostname.replace('www.','');
+    var res = await fetch('/api/clients', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: name, websiteUrl: url, socialLinks: socialLinks }) });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not create client');
+    var client = await res.json();
+    await runAuditWithProgress(client.id);
+  } catch (e) {
+    showErrorState(document.getElementById('main'), e.message, function(){ setView('newaudit'); });
+  }
+}
+
+function showProgressScreen(){
+  var main = document.getElementById('main');
+  var stepsHtml = AUDIT_STEPS.map(function(s,i){ return '<li id="step-' + i + '"><span class="step-mark"></span>' + s + '</li>'; }).join('');
+  main.innerHTML = '<div class="progress-screen"><h2>Analyzing Website</h2>' +
+    '<div style="color:var(--slate);font-size:13px">This usually takes a few seconds.</div>' +
+    '<div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill" style="width:4%"></div></div>' +
+    '<ul class="progress-steps" id="progressSteps">' + stepsHtml + '</ul></div>';
+  var step = 0;
+  window._progressTimer = setInterval(function(){
+    if (step >= AUDIT_STEPS.length - 1) return;
+    var cur = document.getElementById('step-' + step);
+    if (cur) cur.classList.replace('active','done');
+    step++;
+    var next = document.getElementById('step-' + step);
+    if (next) next.classList.add('active');
+    var fill = document.getElementById('progressFill');
+    if (fill) fill.style.width = Math.round((step/AUDIT_STEPS.length)*100) + '%';
+  }, 900);
+  var first = document.getElementById('step-0');
+  if (first) first.classList.add('active');
+}
+function finishProgressScreen(){
+  clearInterval(window._progressTimer);
+  var lis = document.querySelectorAll('.progress-steps li');
+  lis.forEach(function(li){ li.classList.add('done'); });
+  var fill = document.getElementById('progressFill');
+  if (fill) fill.style.width = '100%';
+}
+
+async function runAuditWithProgress(clientId){
+  try {
+    var res = await fetch('/api/audit/' + clientId, { method:'POST' });
+    finishProgressScreen();
+    if (!res.ok) throw new Error((await res.json()).error || 'Audit failed');
+    await loadClients();
+    setTimeout(function(){ activeId = clientId; currentView='report'; activeTab='overview'; renderNav(); render(); }, 400);
+  } catch (e) {
+    showErrorState(document.getElementById('main'), e.message, function(){ runAuditWithProgress(clientId); });
+  }
+}
+async function runAudit(id){
+  var btn = document.getElementById('runBtn');
+  if (btn){ btn.disabled=true; btn.textContent='Auditing...'; }
+  try {
+    var res = await fetch('/api/audit/' + id, { method:'POST' });
+    if (!res.ok) throw new Error((await res.json()).error || 'Audit failed');
+    await loadClients();
+    render();
+  } catch (e) { alert(e.message); }
+  finally { if (btn){ btn.disabled=false; btn.textContent='Run live audit'; } }
+}
+
+function showErrorState(container, message, retryFn){
+  container.innerHTML = '<div class="error-state">' +
+    '<div style="font-weight:700;margin-bottom:4px">Something went wrong</div>' +
+    '<div style="color:var(--slate);font-size:13px">We could not complete this part of the audit. Please try again.</div>' +
+    '<button id="retryBtn">Retry</button></div>';
+  var btn = document.getElementById('retryBtn');
+  if (btn && retryFn) btn.onclick = retryFn;
+}
+
+async function connectGoogle(clientId){
+  var res = await fetch('/api/google/connect/' + clientId);
+  var data = await res.json();
+  if (data.error) return alert('Google connect failed: ' + data.error);
+  window.location.href = data.url;
+}
+async function loadGoogleOptions(clientId){
+  var res = await fetch('/api/google/options/' + clientId);
+  var data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  var site = prompt('Search Console properties found:\n' + (data.sites.join('\n')||'(none)') + '\n\nPaste the exact property URL to use:');
+  var propList = data.properties.map(function(p){ return p.propertyId + ' \u2014 ' + p.displayName; }).join('\n');
+  var prop = prompt('GA4 properties found:\n' + propList + '\n\nPaste the GA4 property ID to use:');
+  await fetch('/api/google/select/' + clientId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ searchConsoleSite: site, ga4PropertyId: prop }) });
+  await loadClients(); render();
+}
+async function runCompetitors(clientId){
+  var urls = Array.prototype.map.call(document.querySelectorAll('.cmp-input'), function(i){ return i.value.trim(); }).filter(Boolean);
+  if (!urls.length) return alert('Add at least one competitor URL.');
+  var btn = document.getElementById('cmpBtn'); btn.disabled=true; btn.textContent='Comparing...';
+  try {
+    var res = await fetch('/api/competitors/' + clientId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ competitorUrls: urls }) });
+    if (!res.ok) throw new Error((await res.json()).error || 'Comparison failed');
+    await loadClients(); render();
+  } catch(e){ alert(e.message); }
+  finally { if(btn){ btn.disabled=false; btn.textContent='Compare'; } }
+}
+
+function render(){
+  if (currentView === 'report' && activeId) return renderReport();
+  if (currentView === 'dashboard') return renderDashboard();
+  if (currentView === 'newaudit') return renderNewAudit();
+  if (currentView === 'audits') return renderListView('audits');
+  if (currentView === 'clients') return renderListView('clients');
+  if (currentView === 'competitors') return renderListView('competitors');
+  if (currentView === 'reports') return renderListView('reports');
+  if (currentView === 'settings') return renderSettings();
+}
+
+function openClient(id){ activeId = id; currentView = 'report'; activeTab = 'overview'; renderNav(); render(); }
+
+function renderNewAudit(){
+  var main = document.getElementById('main');
+  var cardsHtml = PLATFORMS.map(function(p){
+    return '<div class="platform-card">' +
+      '<div class="platform-badge" style="background:' + p.color + '">' + p.label[0] + '</div>' +
+      '<div class="body"><div class="name">' + p.label + ' <span class="status status-empty" id="status-' + p.key + '">Not connected</span></div>' +
+      '<input id="social-' + p.key + '" placeholder="' + p.placeholder + '" oninput="renderPlatformStatuses()"></div></div>';
+  }).join('');
+  main.innerHTML =
+    '<div class="hero">' +
+      '<div class="eyebrow">Digital Presence Audit</div>' +
+      '<h1>Audit Your Complete Digital Presence</h1>' +
+      '<p>Enter a website and discover what is working, what is not, and exactly what you should improve.</p>' +
+      '<div class="url-form">' +
+        '<input id="heroUrl" placeholder="https://example.com" onblur="detectSocialFromUrl()" onkeydown="if(event.key===\'Enter\')startFreeAudit()">' +
+        '<button id="heroBtn" onclick="startFreeAudit()">Start Free Audit</button>' +
+      '</div>' +
+      '<div class="hint">No login required &bull; Fast digital presence analysis</div>' +
+      '<button class="secondary-cta" onclick="viewSampleReport()">View Sample Report &rarr;</button>' +
+    '</div>' +
+    '<div class="social-section">' +
+      '<h2>Social Media Presence</h2>' +
+      '<div class="sub">Add any profiles you have \u2014 leave blank if not applicable. We will try to auto-detect these once you enter a website above.</div>' +
+      '<div class="detected-banner" id="detectBanner" style="display:none"></div>' +
+      '<div class="platform-grid">' + cardsHtml + '</div>' +
+    '</div>';
+}
+
+function renderDashboard(){
+  var main = document.getElementById('main');
+  var audited = clients.filter(function(c){ return c.lastAudit; });
+  var scores = audited.map(function(c){ return c.lastAudit.digitalScore && c.lastAudit.digitalScore.overall; }).filter(function(s){ return s != null; });
+  var avgScore = scores.length ? Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length) : null;
+  var critical = audited.reduce(function(sum,c){ return sum + (c.lastAudit.actionPlan||[]).filter(function(a){return a.priority==='high';}).length; }, 0);
+  var opportunities = audited.reduce(function(sum,c){ return sum + ((c.lastAudit.swot && c.lastAudit.swot.opportunities) || []).length; }, 0);
+  var leadsAudited = audited.filter(function(c){ return c.lastAudit.leadGen; }).length;
+  var totalAudits = clients.reduce(function(sum,c){ return sum + (c.auditHistory?c.auditHistory.length:0); }, 0);
+
+  var recentRows = audited.length ? audited.slice().sort(function(a,b){ return new Date(b.lastAudit.generatedAt)-new Date(a.lastAudit.generatedAt); }).slice(0,8).map(function(c){
+    var score = c.lastAudit.digitalScore ? c.lastAudit.digitalScore.overall : null;
+    return '<div class="list-row" onclick="openClient(\'' + c.id + '\')">' +
+      '<div><div class="name">' + c.name + '</div><div class="meta">' + c.websiteUrl + ' &middot; ' + new Date(c.lastAudit.generatedAt).toLocaleDateString() + '</div></div>' +
+      '<span class="status ' + statusOf(score||0) + '">' + (score!=null?score:'\u2014') + '/100</span></div>';
+  }).join('') : '<div class="empty-state">No audits yet. Start your first one from New Audit.</div>';
+
+  main.innerHTML =
+    '<div style="margin-bottom:22px"><h2 style="font-size:20px;margin-bottom:4px">Digital Presence Overview</h2>' +
+    '<div style="color:var(--slate);font-size:13.5px">Analyze, understand and improve your digital presence.</div></div>' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi-card"><div class="n">' + totalAudits + '</div><div class="l">Total Audits</div></div>' +
+      '<div class="kpi-card"><div class="n">' + (avgScore!=null?avgScore:'\u2014') + '</div><div class="l">Average Digital Score</div></div>' +
+      '<div class="kpi-card"><div class="n">' + critical + '</div><div class="l">Critical Issues</div></div>' +
+      '<div class="kpi-card"><div class="n">' + opportunities + '</div><div class="l">Improvement Opportunities</div></div>' +
+      '<div class="kpi-card"><div class="n">' + leadsAudited + '</div><div class="l">Leads Audited</div></div>' +
+    '</div>' +
+    '<section class="block"><h2>Recent audits</h2>' + recentRows + '</section>';
+}
+
+function renderListView(kind){
+  var main = document.getElementById('main');
+  if (!clients.length) { main.innerHTML = '<div class="empty-state">No clients yet. Start a New Audit to add one.</div>'; return; }
+  var rows = clients.map(function(c){
+    var clickAction = kind==='reports' ? ("window.open('/api/report/" + c.id + "/pdf','_blank')") : ("openClient('" + c.id + "')");
+    var rightSide;
+    if (kind==='reports') rightSide = '<span class="connect-btn">Download PDF</span>';
+    else if (kind==='competitors') rightSide = '<span class="connect-btn">Compare</span>';
+    else if (c.lastAudit) { var s = c.lastAudit.digitalScore ? c.lastAudit.digitalScore.overall : null; rightSide = '<span class="status ' + statusOf(s||0) + '">' + (s!=null?s:'\u2014') + '/100</span>'; }
+    else rightSide = '';
+    return '<div class="list-row" onclick="' + clickAction + '">' +
+      '<div><div class="name">' + c.name + '</div><div class="meta">' + c.websiteUrl + ' &middot; ' + (c.lastAudit ? 'audited '+new Date(c.lastAudit.generatedAt).toLocaleDateString() : 'not yet audited') + '</div></div>' +
+      rightSide + '</div>';
+  }).join('');
+  main.innerHTML = rows;
+}
+
+function renderSettings(){
+  document.getElementById('main').innerHTML =
+    '<div class="card-box"><h2 style="margin-bottom:10px">Settings</h2>' +
+    '<p style="color:var(--slate);font-size:13.5px;margin-bottom:14px">API keys and integrations are configured server-side via environment variables \u2014 never in the browser. Ask whoever deployed this site to set:</p>' +
+    '<table><tbody>' +
+    '<tr><th>GOOGLE_PSI_API_KEY</th><td>PageSpeed performance scores</td></tr>' +
+    '<tr><th>GOOGLE_PLACES_API_KEY</th><td>Local SEO / Google Business Profile</td></tr>' +
+    '<tr><th>GOOGLE_OAUTH_CLIENT_ID / SECRET</th><td>Search Console + GA4 Connect Google</td></tr>' +
+    '<tr><th>MOZ_ACCESS_ID / SECRET_KEY</th><td>Off-page / backlink data</td></tr>' +
+    '<tr><th>SIMILARWEB_API_KEY</th><td>Traffic estimates for sites you do not own</td></tr>' +
+    '</tbody></table></div>';
+}
+
+var TABS = ['overview','onpage','offpage','traffic','googlesearch','social','visual','content','images','localseo','leadgen','competitors','history'];
+var TAB_LABELS = {overview:'Overview', onpage:'On-page SEO', offpage:'Off-page SEO', traffic:'Traffic', googlesearch:'Google Search', social:'Social Media', visual:'Visual & Color', content:'Content', images:'Images', localseo:'Local SEO', leadgen:'Lead Generation', competitors:'Competitors', history:'History'};
+function setTab(t){ activeTab=t; renderReport(); }
+
+function renderReport(){
+  var main = document.getElementById('main');
+  var client = clients.filter(function(c){return c.id===activeId;})[0];
+  if (!client){ main.innerHTML = '<div class="empty-state">Client not found.</div>'; return; }
+  var r = client.lastAudit;
+  var tabsHtml = '<div class="tabs">' + TABS.map(function(t){ return '<div class="tab ' + (t===activeTab?'active':'') + '" onclick="setTab(\'' + t + '\')">' + TAB_LABELS[t] + '</div>'; }).join('') + '</div>';
+
+  if (!r){
+    main.innerHTML = '<div class="report-head"><div><h1>' + client.name + '</h1><div class="url">' + client.websiteUrl + '</div></div></div>' +
+      '<div class="card-box" style="text-align:center;padding:44px"><h2 style="margin-bottom:8px">No audit yet</h2>' +
+      '<p style="color:var(--slate);margin-bottom:18px">Run the first live audit to generate ' + client.name + '\'s Digital Presence Score.</p>' +
+      '<button class="run-btn" id="runBtn" onclick="runAudit(\'' + client.id + '\')">Run live audit</button></div>';
+    return;
+  }
+
+  var body = '';
+  if (activeTab === 'overview'){
+    var ds = r.digitalScore || { overall:null, status:null, breakdown:{} };
+    var catLabels = { website:'Website Health', seo:'Technical SEO', performance:'Performance', content:'Content', social:'Social Media', localSeo:'Local SEO', leadGen:'Lead Generation' };
+    var cards = Object.keys(ds.breakdown||{}).map(function(k){ var v = ds.breakdown[k]; return { l: catLabels[k]||k, n: v.included ? v.score : null }; });
+    var allFindings = [].concat(r.onPage&&r.onPage.findings||[], r.color&&r.color.findings||[], r.content&&r.content.findings||[], r.images&&r.images.findings||[], r.leadGen&&r.leadGen.findings||[], r.localSeo&&r.localSeo.findings||[], r.offPage&&r.offPage.findings||[]);
+    var sevCounts = { critical: allFindings.filter(function(f){return f.severity==='critical';}).length, major: allFindings.filter(function(f){return f.severity==='major';}).length, minor: allFindings.filter(function(f){return f.severity==='minor';}).length };
+    var scoreCardsHtml = cards.map(function(c){
+      return c.n!=null ? ('<div class="score-card"><div class="n">'+c.n+'</div><div class="l">'+c.l+'</div><span class="status '+statusOf(c.n)+'">'+statusLabel(statusOf(c.n))+'</span></div>')
+        : ('<div class="score-card"><div class="n" style="color:var(--slate);font-size:16px">\u2014</div><div class="l">'+c.l+'</div></div>');
+    }).join('');
+    var swotHtml = ['strengths','weaknesses','opportunities','threats'].map(function(k){
+      var items = (r.swot && r.swot[k]) || [];
+      return '<div class="swot-cell '+k+'"><h3>'+k+'</h3><ul>' + (items.length ? items.map(function(x){return '<li>'+x+'</li>';}).join('') : '<li>\u2014</li>') + '</ul></div>';
+    }).join('');
+    var actionsHtml = (r.actionPlan||[]).map(function(a){ return '<li><span class="pri '+a.priority+'">'+a.priority+'</span><span><strong>'+a.area+':</strong> '+a.action+'</span></li>'; }).join('') || '<li style="border:none">No actions generated.</li>';
+    body = '<div class="overview-charts" style="display:flex;gap:28px;align-items:center;margin-bottom:26px;flex-wrap:wrap">' +
+        '<div style="flex:none"><canvas id="scoreDonut" width="150" height="150"></canvas></div>' +
+        '<div style="flex:1;min-width:260px"><canvas id="categoryBar" height="130"></canvas></div>' +
+        '<div style="flex:none;width:170px"><canvas id="severityChart" width="170" height="170"></canvas></div></div>' +
+      '<div class="score-grid">' + scoreCardsHtml + '</div>' +
+      '<div class="info-grid">' +
+        '<div class="info-card"><div class="l">Google Presence</div><div class="d">Search Console clicks/impressions</div><span class="badge '+(r.googleSearch&&r.googleSearch.connected?'on':'off')+'">'+(r.googleSearch&&r.googleSearch.connected?'Connected':'Not connected')+'</span></div>' +
+        '<div class="info-card"><div class="l">Local SEO</div><div class="d">Google Business Profile data</div><span class="badge '+(r.localSeo&&r.localSeo.connected?'on':'off')+'">'+(r.localSeo&&r.localSeo.connected?'Connected':'Unavailable')+'</span></div>' +
+        '<div class="info-card"><div class="l">Lead Generation</div><div class="d">Conversion / CTA analysis</div><span class="badge on">'+(r.leadGen?r.leadGen.score:'\u2014')+'/100</span></div>' +
+        '<div class="info-card"><div class="l">Security</div><div class="d">HTTPS: '+(r.onPage&&r.onPage.isHttps?'Yes':'No')+'</div><span class="badge '+(r.onPage&&r.onPage.isHttps?'on':'off')+'">'+(r.onPage&&r.onPage.isHttps?'Secure':'Not secure')+'</span></div></div>' +
+      '<section class="block"><h2>Executive Summary</h2><div class="card-box">' + (r.executiveSummary || '\u2014') + '</div></section>' +
+      '<section class="block"><h2>SWOT</h2><div class="swot-grid">' + swotHtml + '</div></section>' +
+      '<section class="block"><h2>Prioritized action plan</h2><ul class="actions">' + actionsHtml + '</ul></section>';
+    setTimeout(function(){ drawOverviewCharts(ds, cards, sevCounts); }, 0);
+  }
+  else if (activeTab === 'onpage'){
+    var o = r.onPage || {};
+    body = '<section class="block"><h2>On-page fundamentals</h2><div class="card-box"><table><tbody>' +
+        '<tr><th>Title</th><td>'+(o.title||'\u2014')+'</td></tr>' +
+        '<tr><th>Meta description</th><td>'+(o.metaDescription||'\u2014')+'</td></tr>' +
+        '<tr><th>H1 count</th><td>'+(o.h1Count!=null?o.h1Count:'\u2014')+'</td></tr>' +
+        '<tr><th>HTTPS</th><td>'+(o.isHttps?'Yes':'No')+'</td></tr>' +
+        '<tr><th>Canonical set</th><td>'+(o.hasCanonical?'Yes':'No')+'</td></tr>' +
+        '<tr><th>Mobile viewport</th><td>'+(o.hasViewport?'Yes':'No')+'</td></tr>' +
+        '<tr><th>Open Graph tags</th><td>'+(o.openGraphTags!=null?o.openGraphTags:'\u2014')+'</td></tr>' +
+        '<tr><th>Structured data blocks</th><td>'+(o.structuredDataBlocks!=null?o.structuredDataBlocks:'\u2014')+'</td></tr>' +
+        '<tr><th>robots.txt found</th><td>'+(o.robotsTxtFound?'Yes':'No')+'</td></tr>' +
+        '<tr><th>sitemap.xml found</th><td>'+(o.sitemapFound?'Yes':'No')+'</td></tr>' +
+      '</tbody></table></div></section>' +
+      '<section class="block"><h2>Findings</h2>' + findingsList(o.findings) + '</section>';
+  }
+  else if (activeTab === 'offpage'){
+    var op = r.offPage || {};
+    body = op.connected
+      ? ('<section class="block"><h2>Off-page metrics</h2><div class="card-box"><table><tbody>' +
+          '<tr><th>Domain authority</th><td>'+(op.domainAuthority!=null?op.domainAuthority:'\u2014')+'</td></tr>' +
+          '<tr><th>Linking domains</th><td>'+(op.linkingDomains!=null?op.linkingDomains:'\u2014')+'</td></tr>' +
+          '<tr><th>Total backlinks</th><td>'+(op.totalBacklinks!=null?op.totalBacklinks:'\u2014')+'</td></tr>' +
+        '</tbody></table></div></section>')
+      : ('<div class="note">' + (op.reason || 'Off-page data not connected.') + '</div>');
+  }
+  else if (activeTab === 'traffic'){
+    var t = r.traffic || {};
+    body = t.connected
+      ? ('<section class="block"><h2>Traffic (source: '+(t.source||'connected analytics')+')</h2><div class="card-box"><table><tbody>' +
+          '<tr><th>Sessions ('+(t.periodDays||28)+'d)</th><td>'+(t.sessions!=null?t.sessions.toLocaleString():'\u2014')+'</td></tr>' +
+          '<tr><th>Users</th><td>'+(t.users!=null?t.users.toLocaleString():'\u2014')+'</td></tr>' +
+          '<tr><th>Pageviews</th><td>'+(t.pageviews!=null?t.pageviews.toLocaleString():'\u2014')+'</td></tr>' +
+        '</tbody></table></div></section>')
+      : ('<div class="note">' + (t.reason || 'Traffic data unavailable. Connect Google Analytics/Search Console for first-party traffic data.') + '</div>');
+  }
+  else if (activeTab === 'googlesearch'){
+    var g = r.googleSearch || {};
+    if (g.connected){
+      var qRows = (g.topQueries||[]).map(function(q){ return '<tr><td>'+q.query+'</td><td>'+q.clicks+'</td><td>'+q.impressions+'</td><td>'+q.ctrPct+'%</td><td>'+q.avgPosition+'</td></tr>'; }).join('') || '<tr><td colspan="5">No data.</td></tr>';
+      body = '<section class="block"><h2>Search Console (last '+g.periodDays+' days)</h2><div class="card-box"><table><tbody>' +
+          '<tr><th>Clicks</th><td>'+(g.totalClicks!=null?g.totalClicks.toLocaleString():'\u2014')+'</td></tr>' +
+          '<tr><th>Impressions</th><td>'+(g.totalImpressions!=null?g.totalImpressions.toLocaleString():'\u2014')+'</td></tr>' +
+          '<tr><th>Avg. CTR</th><td>'+(g.avgCtrPct!=null?g.avgCtrPct:'\u2014')+'%</td></tr>' +
+        '</tbody></table></div></section>' +
+        '<section class="block"><h2>Top queries</h2><div class="card-box"><table><thead><tr><th>Query</th><th>Clicks</th><th>Impr.</th><th>CTR</th><th>Position</th></tr></thead><tbody>' + qRows + '</tbody></table></div></section>';
+    } else {
+      body = '<div class="note" style="margin-bottom:14px">' + (g.reason || 'Google not connected.') + '</div>' +
+        '<button class="connect-btn" onclick="connectGoogle(\''+client.id+'\')">Connect Google</button>' +
+        (client.google && client.google.refreshToken ? ('<button class="connect-btn" style="background:var(--p3);margin-left:8px" onclick="loadGoogleOptions(\''+client.id+'\')">Choose property</button>') : '');
+    }
+  }
+  else if (activeTab === 'social'){
+    var socialCards = (r.social||[]).map(function(s){
+      var img = s.profileImage ? ('<img src="'+s.profileImage+'">') : ('<div class="platform-badge" style="background:'+avatarColor(s.platform||'x')+';width:48px;height:48px">'+((s.platform||'?')[0]).toUpperCase()+'</div>');
+      var followersLine = s.followers!=null ? ('Followers: '+s.followers.toLocaleString()+' &middot; ') : 'Followers: Data unavailable &middot; ';
+      var engLine = s.engagementRatePct!=null ? ('Engagement: '+s.engagementRatePct+'% &middot; ') : '';
+      var unreach = s.reachable===false ? '<span style="color:var(--crit)">Unreachable</span>' : '';
+      return '<div class="social-card">' + img + '<div><div class="plat">'+s.platform+'</div><div><strong>'+(s.displayName||s.username||s.url||'\u2014')+'</strong></div>' +
+        '<div style="color:var(--slate);font-size:12.5px">'+(s.bio||'')+'</div>' +
+        '<div style="font-size:12.5px;margin-top:4px">'+followersLine+engLine+unreach+'</div></div></div>';
+    }).join('') || '<div class="empty-state">No social links added yet.</div>';
+    body = '<section class="block"><h2>Social media</h2>' + socialCards + '</section>';
+  }
+  else if (activeTab === 'visual'){
+    var c = r.color || {};
+    var swatches = (c.palette||[]).map(function(p){ return '<div class="swatch"><div class="chip" style="background:'+p.color+'"></div><div class="code">'+p.color+'</div></div>'; }).join('') || '<div class="empty-state">No palette detected.</div>';
+    body = '<section class="block"><h2>Color palette in use</h2><div class="swatches">'+swatches+'</div></section>' +
+      '<section class="block"><h2>Findings</h2>' + findingsList(c.findings) + '</section>';
+  }
+  else if (activeTab === 'content'){
+    var cc = r.content || {};
+    var kwHtml = (cc.topKeywords||[]).map(function(k){ return '<span class="kw">'+k.word+' &middot; '+k.count+' ('+k.densityPct+'%)</span>'; }).join('') || '\u2014';
+    body = '<section class="block"><h2>Content stats</h2><div class="card-box"><table><tbody>' +
+        '<tr><th>Word count</th><td>'+(cc.wordCount!=null?cc.wordCount:'\u2014')+'</td></tr>' +
+        '<tr><th>Reading ease (Flesch)</th><td>'+(cc.fleschReadingEase!=null?cc.fleschReadingEase:'\u2014')+' \u2014 '+(cc.readingLevel||'')+'</td></tr>' +
+      '</tbody></table></div></section>' +
+      '<section class="block"><h2>Top keywords</h2><div>'+kwHtml+'</div></section>' +
+      '<section class="block"><h2>Findings</h2>' + findingsList(cc.findings) + '</section>';
+  }
+  else if (activeTab === 'images'){
+    var im = r.images || {};
+    var imgRows = (im.images||[]).map(function(i){
+      return '<tr><td><img class="img-thumb" src="'+i.url+'" onerror="this.style.visibility=\'hidden\'"></td><td>'+i.url.split('/').pop().slice(0,36)+'</td><td>'+i.format+'</td><td>'+(i.alt?'\u2713':'\u2717')+'</td><td>'+fmtBytes(i.sizeBytes)+'</td></tr>';
+    }).join('') || '<tr><td colspan="5">No images sampled.</td></tr>';
+    body = '<section class="block"><h2>Image inventory</h2><div class="card-box"><table><thead><tr><th></th><th>Image</th><th>Format</th><th>Alt text</th><th>Size</th></tr></thead><tbody>'+imgRows+'</tbody></table></div></section>' +
+      '<section class="block"><h2>Findings</h2>' + findingsList(im.findings) + '</section>';
+  }
+  else if (activeTab === 'localseo'){
+    var ls = r.localSeo || {};
+    body = ls.connected
+      ? ('<section class="block"><h2>Local SEO / Google Business Profile</h2><div class="card-box"><table><tbody>' +
+          '<tr><th>Business</th><td>'+ls.name+'</td></tr>' +
+          '<tr><th>Rating</th><td>'+(ls.rating!=null?ls.rating:'\u2014')+'</td></tr>' +
+          '<tr><th>Review count</th><td>'+(ls.reviewCount!=null?ls.reviewCount:'\u2014')+'</td></tr>' +
+          '<tr><th>Address</th><td>'+(ls.address||'\u2014')+'</td></tr>' +
+          '<tr><th>Phone</th><td>'+(ls.phone||'\u2014')+'</td></tr>' +
+          '<tr><th>Categories</th><td>'+((ls.categories||[]).join(', ')||'\u2014')+'</td></tr>' +
+          '<tr><th>Hours listed</th><td>'+(ls.hasHours?'Yes':'No')+'</td></tr>' +
+          '<tr><th>Photos</th><td>'+(ls.photoCount||0)+'</td></tr>' +
+        '</tbody></table></div></section>' +
+        '<section class="block"><h2>Local SEO Score: '+ls.score+'/100</h2>' + findingsList(ls.findings) + '</section>')
+      : ('<div class="note">' + (ls.reason || 'Local SEO data unavailable.') + '</div>');
+  }
+  else if (activeTab === 'leadgen'){
+    var lg = r.leadGen || {};
+    var checksHtml = Object.keys(lg.checks||{}).map(function(k){ return '<tr><th>'+k+'</th><td>'+(lg.checks[k]?'\u2713 Present':'\u2717 Missing')+'</td></tr>'; }).join('');
+    body = '<section class="block"><h2>Lead Generation Score: '+(lg.score!=null?lg.score:'\u2014')+'/100</h2>' +
+      '<div class="card-box"><table><tbody>'+checksHtml+'</tbody></table></div></section>' +
+      '<section class="block"><h2>What to fix</h2>' + findingsList(lg.findings) + '</section>';
+  }
+  else if (activeTab === 'history'){
+    var hist = client.auditHistory || [];
+    var histRows = hist.slice().reverse().map(function(h){ return '<tr><td>'+new Date(h.date).toLocaleString()+'</td><td>'+(h.score!=null?h.score:'\u2014')+'</td></tr>'; }).join('') || '<tr><td colspan="2">No audits yet.</td></tr>';
+    var chartOrEmpty = hist.length > 1 ? '<div class="card-box"><canvas id="historyChart" height="90"></canvas></div>' : ('<div class="empty-state">Run at least 2 audits to see a trend line. '+hist.length+' audit'+(hist.length===1?'':'s')+' recorded so far.</div>');
+    body = '<section class="block"><h2>Score history</h2>' + chartOrEmpty +
+      '<div class="card-box" style="margin-top:14px"><table><thead><tr><th>Date</th><th>Score</th></tr></thead><tbody>' + histRows + '</tbody></table></div></section>';
+    if (hist.length > 1) setTimeout(function(){ drawHistoryChart(hist); }, 0);
+  }
+  else if (activeTab === 'competitors'){
+    var cr = client.lastCompetitorReport;
+    var cmpTable = '';
+    if (cr) {
+      var headCells = cr.competitors.map(function(c,i){ return '<th>Competitor '+(i+1)+'</th>'; }).join('');
+      var urlCells = cr.competitors.map(function(c){ return '<td>'+c.url+'</td>'; }).join('');
+      var scoreCells = cr.competitors.map(function(c){ return '<td>'+(c.score!=null?c.score:'\u2014')+'</td>'; }).join('');
+      var seoCells = cr.competitors.map(function(c){ return '<td>'+(c.seoIssueCount!=null?c.seoIssueCount:'\u2014')+'</td>'; }).join('');
+      var wcCells = cr.competitors.map(function(c){ return '<td>'+(c.wordCount!=null?c.wordCount:'\u2014')+'</td>'; }).join('');
+      var notesHtml = cr.notes.map(function(n){ return '<li style="border:none">'+n+'</li>'; }).join('') || '<li style="border:none">No notable gaps found.</li>';
+      cmpTable = '<div class="card-box"><table><thead><tr><th></th><th>You</th>'+headCells+'</tr></thead><tbody>' +
+        '<tr><th>Website</th><td>'+cr.self.url+'</td>'+urlCells+'</tr>' +
+        '<tr><th>Score</th><td>'+(cr.self.score!=null?cr.self.score:'\u2014')+'</td>'+scoreCells+'</tr>' +
+        '<tr><th>SEO issues</th><td>'+(cr.self.seoIssueCount!=null?cr.self.seoIssueCount:'\u2014')+'</td>'+seoCells+'</tr>' +
+        '<tr><th>Word count</th><td>'+(cr.self.wordCount!=null?cr.self.wordCount:'\u2014')+'</td>'+wcCells+'</tr>' +
+        '</tbody></table></div>' +
+        '<section class="block" style="margin-top:20px"><h2>Where you stand</h2><ul class="actions">'+notesHtml+'</ul></section>';
+    } else {
+      cmpTable = '<div class="empty-state">Enter up to 3 competitor URLs and click Compare.</div>';
+    }
+    body = '<section class="block"><h2>Compare against competitors</h2>' +
+      '<div class="cmp-form">' +
+        '<input class="cmp-input" placeholder="https://competitor1.com" value="'+((client.competitors&&client.competitors[0])||'')+'">' +
+        '<input class="cmp-input" placeholder="https://competitor2.com" value="'+((client.competitors&&client.competitors[1])||'')+'">' +
+        '<input class="cmp-input" placeholder="https://competitor3.com" value="'+((client.competitors&&client.competitors[2])||'')+'">' +
+        '<button class="connect-btn" id="cmpBtn" onclick="runCompetitors(\''+client.id+'\')">Compare</button>' +
+      '</div>' + cmpTable + '</section>';
+  }
+
+  main.innerHTML = '<div class="report-head"><div><h1>'+client.name+'</h1><div class="url">'+client.websiteUrl+' &middot; audited '+new Date(r.generatedAt).toLocaleString()+'</div></div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<a class="run-btn" style="background:var(--p3);text-decoration:none" href="/api/report/'+client.id+'/pdf" target="_blank">Download PDF Report</a>' +
+      '<button class="run-btn" id="runBtn" onclick="runAudit(\''+client.id+'\')">Run live audit</button>' +
+    '</div></div>' + tabsHtml + body;
+}
+
+function drawOverviewCharts(ds, cards, sevCounts){
+  if (ds.overall != null) {
+    var color = ds.overall>=85?'#1F9D6B':ds.overall>=70?'#186DB6':ds.overall>=50?'#E2A034':'#DC3545';
+    renderChart('scoreDonut', { type:'doughnut', data:{ datasets:[{ data:[ds.overall, 100-ds.overall], backgroundColor:[color, '#E2E8F0'], borderWidth:0 }] },
+      options:{ cutout:'72%', plugins:{ legend:{display:false}, tooltip:{enabled:false} } } });
+  }
+  var withScores = cards.filter(function(c){return c.n!=null;});
+  if (withScores.length) {
+    renderChart('categoryBar', { type:'bar', data:{ labels:withScores.map(function(c){return c.l;}), datasets:[{ data:withScores.map(function(c){return c.n;}), backgroundColor:'#186DB6', borderRadius:4 }] },
+      options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{max:100,ticks:{stepSize:25}}} } });
+  }
+  var sevTotal = sevCounts.critical+sevCounts.major+sevCounts.minor;
+  if (sevTotal) {
+    renderChart('severityChart', { type:'doughnut', data:{ labels:['Critical','Major','Minor'], datasets:[{ data:[sevCounts.critical,sevCounts.major,sevCounts.minor], backgroundColor:['#DC3545','#E2A034','#94A3B8'] }] },
+      options:{ plugins:{ legend:{position:'bottom', labels:{boxWidth:10,font:{size:10}}} } } });
+  }
+}
+function drawHistoryChart(hist){
+  renderChart('historyChart', { type:'line', data:{ labels:hist.map(function(h){return new Date(h.date).toLocaleDateString();}), datasets:[{ label:'Digital Presence Score', data:hist.map(function(h){return h.score;}), borderColor:'#186DB6', backgroundColor:'rgba(24,109,182,.1)', fill:true, tension:.3 }] },
+    options:{ scales:{ y:{min:0,max:100} }, plugins:{legend:{display:false}} } });
+}
+
+var SAMPLE_CLIENT = {
+  id: 'sample', name: 'Riverside Dental (Sample)', websiteUrl: 'https://example-dental.com', auditHistory: [],
+  lastAudit: {
+    generatedAt: new Date().toISOString(),
+    digitalScore: { overall: 68, status: 'Good', breakdown: {
+      website:{score:74,weight:20,included:true}, seo:{score:70,weight:20,included:true}, performance:{score:58,weight:15,included:true},
+      content:{score:65,weight:10,included:true}, social:{score:60,weight:15,included:true}, localSeo:{score:82,weight:10,included:true}, leadGen:{score:44,weight:10,included:true} } },
+    executiveSummary: 'Riverside Dental scores 68/100 overall (Good). The strongest area is local SEO (82/100), while lead generation (44/100) needs the most attention. Fixing the 2 critical issues identified in this report should be the immediate priority.',
+    swot: { strengths:['Strong Google Business Profile (82/100)','Consistent brand voice across social'], weaknesses:['No mobile viewport tag \u2014 hurts mobile rankings','Weak lead capture \u2014 no clear CTA'], opportunities:['Add online booking widget','Build out a patient FAQ page'], threats:['Two nearby competitors rank above you for "dentist near me"'] },
+    actionPlan: [{priority:'high',area:'On-page',action:'Add a mobile viewport meta tag immediately'},{priority:'high',area:'Lead Generation',action:'Add a clear "Book an Appointment" CTA above the fold'},{priority:'medium',area:'Accessibility',action:'Add alt text to the 9 images missing it'}]
+  }
+};
+function viewSampleReport(){
+  var main = document.getElementById('main');
+  var client = SAMPLE_CLIENT, r = client.lastAudit, ds = r.digitalScore;
+  var catLabels = { website:'Website Health', seo:'Technical SEO', performance:'Performance', content:'Content', social:'Social Media', localSeo:'Local SEO', leadGen:'Lead Generation' };
+  var cards = Object.keys(ds.breakdown).map(function(k){ var v = ds.breakdown[k]; return { l: catLabels[k]||k, n: v.included ? v.score : null }; });
+  var scoreCardsHtml = cards.map(function(c){ return '<div class="score-card"><div class="n">'+c.n+'</div><div class="l">'+c.l+'</div><span class="status '+statusOf(c.n)+'">'+statusLabel(statusOf(c.n))+'</span></div>'; }).join('');
+  var swotHtml = ['strengths','weaknesses','opportunities','threats'].map(function(k){ return '<div class="swot-cell '+k+'"><h3>'+k+'</h3><ul>'+r.swot[k].map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>'; }).join('');
+  var actionsHtml = r.actionPlan.map(function(a){ return '<li><span class="pri '+a.priority+'">'+a.priority+'</span><span><strong>'+a.area+':</strong> '+a.action+'</span></li>'; }).join('');
+  main.innerHTML = '<div class="note" style="margin-bottom:20px">This is sample data for demonstration \u2014 not a real audit. <button class="secondary-cta" onclick="setView(\'newaudit\')">&larr; Back</button></div>' +
+    '<div class="report-head"><div><h1>'+client.name+'</h1><div class="url">'+client.websiteUrl+'</div></div></div>' +
+    '<div class="overview-charts" style="display:flex;gap:28px;align-items:center;margin-bottom:26px;flex-wrap:wrap">' +
+      '<div style="flex:none"><canvas id="scoreDonut" width="150" height="150"></canvas></div>' +
+      '<div style="flex:1;min-width:260px"><canvas id="categoryBar" height="130"></canvas></div></div>' +
+    '<div class="score-grid">'+scoreCardsHtml+'</div>' +
+    '<section class="block"><h2>Executive Summary</h2><div class="card-box">'+r.executiveSummary+'</div></section>' +
+    '<section class="block"><h2>SWOT</h2><div class="swot-grid">'+swotHtml+'</div></section>' +
+    '<section class="block"><h2>Prioritized action plan</h2><ul class="actions">'+actionsHtml+'</ul></section>';
+  setTimeout(function(){ drawOverviewCharts(ds, cards, {critical:1,major:2,minor:1}); }, 0);
+}
+</script>
+</body>
+</html>

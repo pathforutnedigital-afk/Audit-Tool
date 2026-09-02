@@ -1,0 +1,20 @@
+{
+  "name": "digital-audit-tool",
+  "version": "1.0.0",
+  "description": "Agency tool: audits a client's website + social presence, finds gaps, generates a SWOT and action plan.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0",
+    "serverless-http": "^3.2.0",
+    "@netlify/blobs": "^11.0.3",
+    "pdfkit": "^0.15.0"
+  }
+}
